@@ -1,0 +1,86 @@
+// Milestone 1 schema draft (models only).
+// The datasource and generator blocks come from the Prisma setup in the current docs.
+
+model User {
+  id           Int          @id @default(autoincrement())
+  email        String       @unique
+  passwordHash String?      // optional: login is skipped in Milestone 1
+  createdAt    DateTime     @default(now())
+  recipes      Recipe[]
+  plans        WeeklyPlan[]
+}
+
+model Recipe {
+  id             Int                @id @default(autoincrement())
+  name           String
+  sourceUrl      String?            // null for custom recipes
+  source         String?            // creator, e.g. "Tiffy Cooks"
+  userId         Int
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredients    RecipeIngredient[]
+  tags           Tag[]              // implicit many-to-many
+  plans          WeeklyPlan[]
+  checklistItems ChecklistItem[]
+}
+
+model Ingredient {
+  id             Int                @id @default(autoincrement())
+  name           String             @unique
+  recipes        RecipeIngredient[]
+  checklistItems ChecklistItem[]
+}
+
+model RecipeIngredient {
+  recipeId     Int
+  ingredientId Int
+  quantity     Float?
+  unit         String?
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@id([recipeId, ingredientId])
+}
+
+enum TagCategory {
+  CUISINE
+  PROTEIN
+  METHOD
+  EFFORT
+  STRETCH
+  REHEATS
+}
+
+model Tag {
+  id       Int         @id @default(autoincrement())
+  category TagCategory
+  name     String
+  recipes  Recipe[]
+
+  @@unique([category, name])
+}
+
+model WeeklyPlan {
+  id            Int             @id @default(autoincrement())
+  weekStart     DateTime        @db.Date        // normalize: Monday of the week
+  userId        Int
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pickedRecipes Recipe[]        // implicit many-to-many
+  items         ChecklistItem[]
+
+  @@unique([userId, weekStart]) // one plan per user per week
+}
+
+model ChecklistItem {
+  id           Int        @id @default(autoincrement())
+  checked      Boolean    @default(false)
+  quantity     Float?
+  unit         String?
+  planId       Int
+  plan         WeeklyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  recipeId     Int
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredientId Int
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([planId, recipeId, ingredientId])
+}
