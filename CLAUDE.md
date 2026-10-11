@@ -13,6 +13,8 @@ Success test: used in 3 of the first 4 weeks, and at least 4 new recipes cooked 
 
 Check current official docs for setup commands and config. Prisma and Next.js have changed their setup recently, so do not rely on memory for install steps.
 
+@AGENTS.md
+
 ## How to work with me (important)
 
 I'm using this project to learn, with a career goal of strong full-stack/backend skills. Default to teaching mode:
