@@ -3,10 +3,8 @@
 // Safe to re-run: it reuses the user and skips recipes that already exist.
 import "dotenv/config"; // must come first: loads .env before the client reads it
 import { prisma } from "../src/lib/prisma";
+import { SEED_USER_EMAIL } from "../src/lib/currentUser";
 import { seedRecipes } from "./seed-data";
-
-// Milestone 1 has no login, so this is just a stable identity for "me".
-const SEED_USER_EMAIL = "owner@recipepicker.local";
 
 async function main() {
   // upsert = update if it exists, insert if it doesn't. `update: {}` means
