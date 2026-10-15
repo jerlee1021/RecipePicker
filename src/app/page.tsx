@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { pickThisWeek } from "./actions";
 import { getCurrentUserId } from "@/lib/currentUser";
 import { getPlanForWeek } from "@/lib/queries/weeklyrecipes";
 import { getMondayOf } from "@/lib/week";
@@ -44,8 +45,15 @@ export default async function Home() {
           ))}
         </ul>
       ) : (
-        // Step 3 replaces this with a form whose button calls the pick action.
-        <p className="mt-6 text-zinc-600 dark:text-zinc-400">No plan yet for this week.</p>
+        <form action={pickThisWeek} className="mt-6">
+          <p className="text-zinc-600 dark:text-zinc-400">No plan yet for this week.</p>
+          <button
+            type="submit"
+            className="mt-4 w-full rounded-lg bg-zinc-900 px-4 py-3 font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+          >
+            Pick this week&apos;s recipes
+          </button>
+        </form>
       )}
     </main>
   );
