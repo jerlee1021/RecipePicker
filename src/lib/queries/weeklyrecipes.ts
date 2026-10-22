@@ -34,18 +34,53 @@ export async function getPlanForWeek(userId: number, weekStart: Date) {
     return userPlans;
 }
 
-// Writes a plan and its picks in one nested create. Choosing the recipes
+// Writes a plan, its picks, and its items in one nested atomic create. Choosing the recipes
 // happens in the caller (server action), so this stays pure database access.
 export async function createPlanWithPicks(userId: number, weekStart: Date, recipeIds: number[]) {
-    const userPlan = await prisma.weeklyPlan.create({
-        data: {
-            userId: userId,
-            weekStart: weekStart,
-            pickedRecipes: {
-                create: recipeIds.map((recipeId) => ({ recipeId }))
+    // Use a transaction to ensure that the plan and its picks are created atomically - all or nothing
+    const plan = await prisma.$transaction(async (tx) => {
+        const myRecipeCount = await tx.recipe.count({
+            where: {
+                id: {in: recipeIds},
+                userId: userId
             }
+        });
+        const totalRecipeCount = recipeIds.length;
+        if (myRecipeCount !== totalRecipeCount) {
+            throw new Error("Some recipe IDs are missing, duplicated, or not owned by this user");
         }
+        const recipeIngredients = await tx.recipeIngredient.findMany({
+            where: 
+            {   
+                recipeId: {in: recipeIds},
+            },
+            select: {
+                ingredientId: true,
+                quantity: true,
+                unit: true,
+                recipeId: true
+            }
+        })
+        const userPlan = await tx.weeklyPlan.create({
+            data: {
+                userId: userId,
+                weekStart: weekStart,
+                pickedRecipes: {
+                    create: recipeIds.map((recipeId) => ({ recipeId }))
+                },
+                items: {
+                    create: recipeIngredients.map((ingredient) => ({
+                        ingredientId: ingredient.ingredientId,
+                        quantity: ingredient.quantity,
+                        unit: ingredient.unit,
+                        recipeId: ingredient.recipeId
+                    }))
+                }
+            }
+        });
+        return userPlan;
     });
-    return userPlan;
+    
+    return plan;
 }
 
