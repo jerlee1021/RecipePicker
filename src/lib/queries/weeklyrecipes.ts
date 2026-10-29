@@ -37,7 +37,7 @@ export async function getPlanForWeek(userId: number, weekStart: Date) {
 // Writes a plan, its picks, and its items in one nested atomic create. Choosing the recipes
 // happens in the caller (server action), so this stays pure database access.
 export async function createPlanWithPicks(userId: number, weekStart: Date, recipeIds: number[]) {
-    // Use a transaction to ensure that the plan and its picks are created atomically - all or nothing
+    // Use a transaction to ensure everything is created atomically - all or nothing
     const plan = await prisma.$transaction(async (tx) => {
         const myRecipeCount = await tx.recipe.count({
             where: {
