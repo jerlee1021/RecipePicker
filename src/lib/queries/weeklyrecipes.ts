@@ -84,3 +84,26 @@ export async function createPlanWithPicks(userId: number, weekStart: Date, recip
     return plan;
 }
 
+export async function getChecklistForPlan(userId: number, planId: number) {
+    const checklist = await prisma.checklistItem.findMany({
+        where: {
+            planId: planId,
+            plan: {userId: userId}
+        },
+        select: {
+            id: true,
+            ingredient: {select: {name: true}},
+            quantity: true,
+            unit: true,
+            recipe: {select: {name: true, id: true}},
+            checked: true
+        },
+        orderBy: [
+            {recipeId: 'asc'},
+            {ingredient: {name: 'asc'}}
+        ]
+    })
+
+    return checklist;
+}
+ 
