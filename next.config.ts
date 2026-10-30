@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Type-check <Link href> against the routes in src/app, so a typo is a compile error, not a 404.
+  typedRoutes: true,
   turbopack: {
     rules: {
       "*.css": {

@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUserId } from "@/lib/currentUser";
 import { pickRandom } from "@/lib/picks";
-import { createPlanWithPicks, getRecipesForUser } from "@/lib/queries/weeklyrecipes";
+import { createPlanWithPicks, getRecipesForUser, setChecklistItemChecked } from "@/lib/queries/weeklyrecipes";
 import { getMondayOf } from "@/lib/week";
 
 const PICKS_PER_WEEK = 3;
@@ -27,5 +27,27 @@ export async function pickThisWeek() {
   }
 
   // Re-render the page so it shows the new plan.
+  refresh();
+}
+
+// Takes the desired state, not "flip", so a retried request is harmless (idempotent).
+export async function setItemChecked(itemId: number, checked: boolean) {
+  // TypeScript types vanish at runtime and these values come from the browser.
+  if (!Number.isInteger(itemId) || typeof checked !== "boolean") {
+    throw new Error("Invalid checklist update");
+  }
+
+  const userId = await getCurrentUserId();
+
+  try {
+    await setChecklistItemChecked(userId, itemId, checked);
+  } catch (e) {
+    // P2025 = no row matched: the item doesn't exist or isn't this user's.
+    // Only a tampered request or a stale tab gets here, so log it and move on.
+    const notFound = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
+    if (!notFound) throw e;
+    console.warn(`setItemChecked: item ${itemId} not found for user ${userId}`);
+  }
+
   refresh();
 }
