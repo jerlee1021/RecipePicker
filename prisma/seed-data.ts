@@ -259,8 +259,8 @@ export const seedRecipes: SeedRecipe[] = [
   },
   {
     name: "Kimchi Spam Onigirazu",
-    source: null,
-    sourceUrl: null,
+    source:  "Tiffy Cooks",
+    sourceUrl: "https://tiffycooks.com/kimchi-spam-onigirazu-easy-10-minute-lunch/",
     tags: [
       { category: "CUISINE", name: "korean" },
       { category: "CUISINE", name: "japanese" },

@@ -4,7 +4,12 @@ import { refresh } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUserId } from "@/lib/currentUser";
 import { pickRandom } from "@/lib/picks";
-import { createPlanWithPicks, getRecipesForUser, setChecklistItemChecked } from "@/lib/queries/weeklyrecipes";
+import {
+  createPlanWithPicks,
+  deletePlanForWeek,
+  getRecipesForUser,
+  setChecklistItemChecked,
+} from "@/lib/queries/weeklyrecipes";
 import { getMondayOf } from "@/lib/week";
 
 const PICKS_PER_WEEK = 3;
@@ -27,6 +32,23 @@ export async function pickThisWeek() {
   }
 
   // Re-render the page so it shows the new plan.
+  refresh();
+}
+
+// No arguments: who and which week both come from the server.
+// Deleting the plan cascades to its picks and checklist items.
+export async function deleteThisWeek() {
+  const userId = await getCurrentUserId();
+
+  try {
+    await deletePlanForWeek(userId, getMondayOf(new Date()));
+  } catch (e) {
+    // P2025 = no plan to delete: a double tap or another tab already removed it.
+    // The user got what they wanted, so treat it as success.
+    const alreadyDeleted = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
+    if (!alreadyDeleted) throw e;
+  }
+
   refresh();
 }
 

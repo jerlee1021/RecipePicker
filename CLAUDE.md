@@ -52,5 +52,7 @@ Steps:
 4. Seed script: one user plus about 10 recipes with ingredients and tags.
 5. Picks page: show 3 recipes (random is fine for now).
 6. Grocery checklist: combine the picks' ingredients grouped by recipe, with check-offs saved to the database.
+7. Delete this week's plan (with a confirm step), so I can redo it on a different day.
+8. Cycle picks before committing: hold the ones I like, refresh the rest (avoiding recipes already shown), then confirm. The draft lives only in the browser; nothing is saved until confirm, which reuses the existing plan creation.
 
-Out of scope for now: scraping, taste learning, refresh and swap, ratings, auth, nutrition sync, an in-app cooking view. Each recipe links out to the original page.
+Out of scope for now: scraping, taste learning, ratings, auth, nutrition sync, an in-app cooking view. Each recipe links out to the original page.

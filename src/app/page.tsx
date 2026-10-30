@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { pickThisWeek } from "./actions";
+import { deleteThisWeek, pickThisWeek } from "./actions";
+import { DeletePlanButton } from "./delete-plan-button";
 import { PickButton } from "./pick-button";
 import { getCurrentUserId } from "@/lib/currentUser";
 import { getPlanForWeek } from "@/lib/queries/weeklyrecipes";
@@ -53,6 +54,9 @@ export default async function Home() {
           >
             Grocery list
           </Link>
+          <form action={deleteThisWeek}>
+            <DeletePlanButton />
+          </form>
         </>
       ) : (
         <form action={pickThisWeek} className="mt-6">
