@@ -107,3 +107,16 @@ export async function getChecklistForPlan(userId: number, planId: number) {
     return checklist;
 }
  
+
+export async function setChecklistItemChecked(userId: number, itemId: number, checked: boolean) {
+    await prisma.checklistItem.update({
+        where: {
+            id: itemId,
+            plan: {userId: userId}
+        },
+        data: {
+            checked: checked
+        }
+    })
+
+}
