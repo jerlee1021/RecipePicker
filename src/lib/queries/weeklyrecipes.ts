@@ -84,6 +84,17 @@ export async function createPlanWithPicks(userId: number, weekStart: Date, recip
     return plan;
 }
 
+export async function deletePlanForWeek(userId: number, weekStart: Date) {
+    await prisma.weeklyPlan.delete({
+        where: {
+            userId_weekStart: {
+                userId: userId,
+                weekStart: weekStart
+            }
+        }
+    })
+}
+
 export async function getChecklistForPlan(userId: number, planId: number) {
     const checklist = await prisma.checklistItem.findMany({
         where: {
@@ -118,5 +129,5 @@ export async function setChecklistItemChecked(userId: number, itemId: number, ch
             checked: checked
         }
     })
-
 }
+
