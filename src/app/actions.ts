@@ -3,26 +3,29 @@
 import { refresh } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUserId } from "@/lib/currentUser";
-import { pickRandom } from "@/lib/picks";
-import {
-  createPlanWithPicks,
-  deletePlanForWeek,
-  getRecipesForUser,
-  setChecklistItemChecked,
-} from "@/lib/queries/weeklyrecipes";
+import { PICKS_PER_WEEK } from "@/lib/picks";
+import { createPlanWithPicks, deletePlanForWeek, setChecklistItemChecked } from "@/lib/queries/weeklyrecipes";
 import { getMondayOf } from "@/lib/week";
-
-const PICKS_PER_WEEK = 3;
 
 // Server actions are public POST endpoints, so identity comes from the server,
 // never from anything the form sends.
-export async function pickThisWeek() {
+// The browser chose these ids, so check their shape here; createPlanWithPicks
+// separately rejects any id this user doesn't own.
+export async function confirmPicks(recipeIds: number[]) {
+  const validShape =
+    Array.isArray(recipeIds) &&
+    recipeIds.length > 0 &&
+    recipeIds.length <= PICKS_PER_WEEK &&
+    recipeIds.every(Number.isInteger) &&
+    new Set(recipeIds).size === recipeIds.length;
+  if (!validShape) {
+    throw new Error("Invalid picks");
+  }
+
   const userId = await getCurrentUserId();
-  const recipes = await getRecipesForUser(userId);
-  const picked = pickRandom(recipes, PICKS_PER_WEEK);
 
   try {
-    await createPlanWithPicks(userId, getMondayOf(new Date()), picked.map((r) => r.id));
+    await createPlanWithPicks(userId, getMondayOf(new Date()), recipeIds);
   } catch (e) {
     // P2002 = unique constraint failed: another request (double tap, second tab)
     // already created this week's plan. The user got what they wanted, so fall

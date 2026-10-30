@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { deleteThisWeek, pickThisWeek } from "./actions";
+import { deleteThisWeek } from "./actions";
 import { DeletePlanButton } from "./delete-plan-button";
-import { PickButton } from "./pick-button";
+import { PlanDraft } from "./plan-draft";
 import { getCurrentUserId } from "@/lib/currentUser";
-import { getPlanForWeek } from "@/lib/queries/weeklyrecipes";
+import { PICKS_PER_WEEK, pickRandom } from "@/lib/picks";
+import { getPlanForWeek, getRecipesForUser } from "@/lib/queries/weeklyrecipes";
 import { getMondayOf } from "@/lib/week";
 
 export default async function Home() {
@@ -14,6 +15,9 @@ export default async function Home() {
   const userId = await getCurrentUserId();
   const weekStart = getMondayOf(new Date());
   const plan = await getPlanForWeek(userId, weekStart);
+
+  // Only needed without a plan: the draft picks from all of the user's recipes.
+  const recipes = plan ? [] : await getRecipesForUser(userId);
 
   // weekStart is midnight UTC, so format it in UTC or it can show as Sunday.
   const weekLabel = weekStart.toLocaleDateString("en-US", {
@@ -59,10 +63,15 @@ export default async function Home() {
           </form>
         </>
       ) : (
-        <form action={pickThisWeek} className="mt-6">
-          <p className="text-zinc-600 dark:text-zinc-400">No plan yet for this week.</p>
-          <PickButton />
-        </form>
+        <>
+          <p className="mt-6 text-zinc-600 dark:text-zinc-400">
+            No plan yet for this week. Hold the ones you like and refresh the rest.
+          </p>
+          {/* Initial picks are chosen here on the server, not in the client component:
+              random values computed during render would differ between the server's HTML
+              and the browser's first render (a hydration mismatch). */}
+          <PlanDraft recipes={recipes} initialPicks={pickRandom(recipes, PICKS_PER_WEEK)} />
+        </>
       )}
     </main>
   );

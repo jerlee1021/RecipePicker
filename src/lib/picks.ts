@@ -1,3 +1,5 @@
+export const PICKS_PER_WEEK = 3;
+
 export function pickRandom<T>(items: T[], count: number): T[] {
     const itemsCopy = [...items];
 
