@@ -94,7 +94,7 @@ export function PlanDraft({ recipes, initialPicks }: Props) {
         disabled={allHeld || isConfirming}
         className="mt-4 w-full rounded-lg border border-zinc-300 px-4 py-3 font-medium disabled:opacity-60 dark:border-zinc-700"
       >
-        Refresh the rest
+        Refresh
       </button>
       <button
         type="button"

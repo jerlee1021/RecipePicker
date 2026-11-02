@@ -56,3 +56,19 @@ Steps:
 8. Cycle picks before committing: hold the ones I like, refresh the rest (avoiding recipes already shown), then confirm. The draft lives only in the browser; nothing is saved until confirm, which reuses the existing plan creation.
 
 Out of scope for now: scraping, taste learning, ratings, auth, nutrition sync, an in-app cooking view. Each recipe links out to the original page.
+
+Milestone 1 gate passed: I plan real weeks with it.
+
+## Milestone 1.5 (current)
+
+Goal: small improvements before Milestone 2, in this order.
+
+1. Password lock: one shared password (Vercel env var) checked in `proxy.ts`, so a stranger with the URL can't view or delete my plan. A stopgap, not user accounts.
+2. Custom recipe form: add a recipe with ingredients and tags through a form instead of the seed script. Validate in the server action with Zod (first use of Zod; the same pattern is reused for scraped data in Milestone 2).
+3. Search and hold: search my recipes from the picks page and hold one into the draft. Client-side filter over the recipes already loaded is fine at this size. The hold-from-search rule lives in `src/lib/picks.ts` next to `refreshPicks`.
+
+## Later milestones (proposed, not final)
+
+- Milestone 2: add recipes by URL. Extraction in `src/lib/` (schema.org JSON-LD first), Zod at the boundary, a job table plus a background worker in a container, and a review screen before saving. Start collecting "cooked?" plus a quick rating early, so Milestone 3 has data.
+- Milestone 3: taste learning. Rule-based scoring first (ratings, cooldowns, at least one new pick, keep stretch picks achievable), with a reason shown for each pick. Embeddings and caching only if rules aren't enough.
+- Milestone 4: real user accounts before inviting friends and family. Replace `currentUser.ts` with real identity, and each user sees only their own data.
