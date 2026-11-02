@@ -65,7 +65,7 @@ Goal: small improvements before Milestone 2, in this order.
 
 1. Password lock: one shared password (Vercel env var) checked in `proxy.ts`, so a stranger with the URL can't view or delete my plan. A stopgap, not user accounts.
 2. Custom recipe form: add a recipe with ingredients and tags through a form instead of the seed script. Validate in the server action with Zod (first use of Zod; the same pattern is reused for scraped data in Milestone 2).
-3. Search and hold: search my recipes from the picks page and hold one into the draft. Client-side filter over the recipes already loaded is fine at this size. The hold-from-search rule lives in `src/lib/picks.ts` next to `refreshPicks`.
+3. Search and hold: search my recipes from the picks page and hold one into the draft. Client-side filter over the recipes already loaded is fine at this size. The hold-from-search rule lives in `src/lib/picks.ts` next to `refreshPicks`. Layout: on wide screens search sits in a left column beside the picks; on the phone it's one column, picks first, search below.
 
 ## Later milestones (proposed, not final)
 
