@@ -1,4 +1,5 @@
 import { prisma } from "../prisma";
+import type { RecipeInput } from "../recipeInput";
 
 export async function getRecipesForUser(userId: number) {
     // Implementation for fetching recipes for a specific user
@@ -129,5 +130,37 @@ export async function setChecklistItemChecked(userId: number, itemId: number, ch
             checked: checked
         }
     })
+}
+
+// One nested create, so the recipe, its lines, and its tag links save all-or-nothing.
+// Ingredients are shared across users: each line links to the existing row by its
+// (already normalized) name, creating it on first use, as the seed does.
+// Tags must already exist; connect throws P2025 if an id doesn't.
+export async function createRecipeForUser(userId: number, data: RecipeInput) {
+    const recipe = await prisma.recipe.create({
+        data: {
+            userId,
+            name: data.name,
+            source: data.source,
+            sourceUrl: data.sourceUrl,
+            ingredients: {
+                create: data.ingredients.map((line) => ({
+                    quantity: line.quantity,
+                    unit: line.unit,
+                    note: line.note,
+                    ingredient: {
+                        connectOrCreate: {
+                            where: { name: line.name },
+                            create: { name: line.name },
+                        },
+                    },
+                })),
+            },
+            tags: {
+                connect: data.tagIds.map((id) => ({ id })),
+            },
+        },
+    });
+    return recipe;
 }
 

@@ -73,6 +73,10 @@ export default async function Home() {
           <PlanDraft recipes={recipes} initialPicks={pickRandom(recipes, PICKS_PER_WEEK)} />
         </>
       )}
+
+      <Link href="/recipes/new" className="mt-8 block text-center text-sm text-zinc-500 underline underline-offset-4">
+        + New recipe
+      </Link>
     </main>
   );
 }

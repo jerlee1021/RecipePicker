@@ -4,8 +4,10 @@ import { refresh } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUserId } from "@/lib/currentUser";
 import { PICKS_PER_WEEK } from "@/lib/picks";
-import { createPlanWithPicks, deletePlanForWeek, setChecklistItemChecked } from "@/lib/queries/weeklyrecipes";
+import { createPlanWithPicks, deletePlanForWeek, setChecklistItemChecked, createRecipeForUser } from "@/lib/queries/weeklyrecipes";
 import { getMondayOf } from "@/lib/week";
+import { RecipeInput } from "@/lib/recipeInput";
+import { redirect } from "next/navigation";
 
 // Server actions are public POST endpoints, so identity comes from the server,
 // never from anything the form sends.
@@ -76,3 +78,32 @@ export async function setItemChecked(itemId: number, checked: boolean) {
 
   refresh();
 }
+
+export type CreateRecipeResult = {
+  issues: { path: PropertyKey[]; message: string }[];
+};
+
+// input is `unknown` on purpose: anyone can POST to this, so nothing about its
+// shape is trusted until the schema has checked it.
+export async function createRecipe(input: unknown): Promise<CreateRecipeResult> {
+  const result = RecipeInput.safeParse(input);
+  if (!result.success) {
+    return { issues: result.error.issues };
+  }
+
+  const userId = await getCurrentUserId();
+
+  try {
+    await createRecipeForUser(userId, result.data);
+  } catch (e) {
+    // P2025 = a tag id didn't match a row: a stale form or a tampered request.
+    // Report it on the tags field instead of crashing the page.
+    const missingTag = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
+    if (!missingTag) throw e;
+    return { issues: [{ path: ["tagIds"], message: "Some tags no longer exist. Reload and try again." }] };
+  }
+
+  // Outside the try: redirect works by throwing, and the catch would swallow it.
+  redirect("/");
+}
+
