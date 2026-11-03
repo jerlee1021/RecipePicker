@@ -78,6 +78,7 @@ model PickedRecipe {
   recipeId Int
   recipe   Recipe     @relation(fields: [recipeId], references: [id])
   cookedAt DateTime?
+  rating   Int?
 
   @@unique([planId, recipeId])
 }

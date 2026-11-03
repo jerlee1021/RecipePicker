@@ -40,21 +40,31 @@ export async function confirmPicks(recipeIds: number[]) {
   refresh();
 }
 
-// No arguments: who and which week both come from the server.
+export type DeleteThisWeekState = { error: string | null };
+
+// Called through useActionState, which passes (prevState, formData); neither is needed,
+// because who and which week both come from the server, never from the form.
+// Returns the next state for the button to show.
 // Deleting the plan cascades to its picks and checklist items.
-export async function deleteThisWeek() {
+export async function deleteThisWeek(): Promise<DeleteThisWeekState> {
   const userId = await getCurrentUserId();
 
   try {
-    await deletePlanForWeek(userId, getMondayOf(new Date()));
+    const result = await deletePlanForWeek(userId, getMondayOf(new Date()));
+    // "missing" = a double tap or another tab already removed it. The user got
+    // what they wanted, so only "cooked" is an error.
+    if (!result.deleted && result.reason === "cooked") {
+      return { error: "This plan has cooked recipes, so it can't be deleted." };
+    }
   } catch (e) {
-    // P2025 = no plan to delete: a double tap or another tab already removed it.
-    // The user got what they wanted, so treat it as success.
+    // P2025 = the plan vanished between the check and the delete (another tab).
+    // Same outcome as "missing", so treat it as success.
     const alreadyDeleted = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
     if (!alreadyDeleted) throw e;
   }
 
   refresh();
+  return { error: null };
 }
 
 // Takes the desired state, not "flip", so a retried request is harmless (idempotent).

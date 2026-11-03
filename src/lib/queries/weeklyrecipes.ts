@@ -85,7 +85,39 @@ export async function createPlanWithPicks(userId: number, weekStart: Date, recip
     return plan;
 }
 
-export async function deletePlanForWeek(userId: number, weekStart: Date) {
+// Discriminated union: when deleted is false, reason says why.
+export type DeletePlanResult =
+    | { deleted: true }
+    | { deleted: false; reason: "cooked" | "missing" };
+
+// Deletes the weekly plan for a specific user and week.
+// Block delete if a plan has any picked recipes that have been cooked.
+export async function deletePlanForWeek(userId: number, weekStart: Date): Promise<DeletePlanResult> {
+    const plan = await prisma.weeklyPlan.findUnique({
+        where: {
+            userId_weekStart: {
+                userId: userId,
+                weekStart: weekStart
+            }
+        },
+        include: {
+            // Count only the cooked picks; any at all blocks the delete
+            _count: {
+                select: {
+                    pickedRecipes: { where: { cookedAt: { not: null } } }
+                }
+            }
+        }
+    });
+
+    if (!plan) {
+        return { deleted: false, reason: "missing" };
+    }
+
+    if (plan._count.pickedRecipes > 0) {
+        return { deleted: false, reason: "cooked" };
+    }
+
     await prisma.weeklyPlan.delete({
         where: {
             userId_weekStart: {
@@ -93,7 +125,8 @@ export async function deletePlanForWeek(userId: number, weekStart: Date) {
                 weekStart: weekStart
             }
         }
-    })
+    });
+    return { deleted: true };
 }
 
 export async function getChecklistForPlan(userId: number, planId: number) {

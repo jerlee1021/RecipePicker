@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { deleteThisWeek } from "./actions";
 import { DeletePlanButton } from "./delete-plan-button";
 import { PlanDraft } from "./plan-draft";
 import { getCurrentUserId } from "@/lib/currentUser";
@@ -59,9 +58,7 @@ export default async function Home() {
           >
             Grocery list
           </Link>
-          <form action={deleteThisWeek}>
-            <DeletePlanButton />
-          </form>
+          <DeletePlanButton />
         </>
       ) : (
         <>
