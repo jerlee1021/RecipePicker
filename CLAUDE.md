@@ -41,7 +41,7 @@ The schema I wrote is in `docs/schema-draft.prisma` (models only; the datasource
 - `ChecklistItem` is one line on the grocery list: one ingredient, from one recipe, in one weekly plan. It copies quantity and unit as a snapshot.
 - Normalize `WeeklyPlan.weekStart` (always the Monday at midnight) so the unique constraint works.
 
-## Milestone 1 (current)
+## Milestone 1 (done)
 
 Goal: about 10 hand-entered recipes, 3 picks, and a grocery checklist that works on my phone, with checks that survive a reload. Gate: I plan one real week and shop from it.
 
@@ -59,7 +59,7 @@ Out of scope for now: scraping, taste learning, ratings, auth, nutrition sync, a
 
 Milestone 1 gate passed: I plan real weeks with it.
 
-## Milestone 1.5 (current)
+## Milestone 1.5 (done)
 
 Goal: small improvements before Milestone 2, in this order.
 
@@ -67,8 +67,20 @@ Goal: small improvements before Milestone 2, in this order.
 2. Custom recipe form: add a recipe with ingredients and tags through a form instead of the seed script. Validate in the server action with Zod (first use of Zod; the same pattern is reused for scraped data in Milestone 2).
 3. Search and hold: search my recipes from the picks page and hold one into the draft. Client-side filter over the recipes already loaded is fine at this size. The hold-from-search rule lives in `src/lib/picks.ts` next to `refreshPicks`. Layout: on wide screens search sits in a left column beside the picks; on the phone it's one column, picks first, search below.
 
+## Milestone 2 (current)
+
+Goal: paste a recipe URL, review the extracted recipe, save it. Gate: import about 10 real recipes from at least 5 sites; at least 8 need only light fixes on the review screen.
+
+Steps:
+1. Cooked + rating: mark each pick cooked with a quick 1–5 rating, stored per cook (on `PickedRecipe`). Data collection only, so Milestone 3 has history; nothing reads it yet and picks stay random.
+2. Extractor and ingredient line parser in `src/lib/extract/` (pure TS, schema.org JSON-LD), with Zod at the boundary and Vitest tests on saved HTML fixtures. Fetching is hardened (http/https only, timeout, size cap, no private addresses).
+3. Synchronous import: a server action runs the extractor and opens a review screen (the 1.5 recipe form, prefilled) that saves through the existing Zod action. Duplicate guard on `[userId, sourceUrl]`.
+4. `ImportJob` table and a worker (claims jobs with `FOR UPDATE SKIP LOCKED`, limited retries), run locally first.
+5. Dockerize and deploy the worker; the UI polls job status.
+
+Out of scope: headless browsers, LLM extraction, sites without JSON-LD (fall back to the manual form), images, nutrition.
+
 ## Later milestones (proposed, not final)
 
-- Milestone 2: add recipes by URL. Extraction in `src/lib/` (schema.org JSON-LD first), Zod at the boundary, a job table plus a background worker in a container, and a review screen before saving. Start collecting "cooked?" plus a quick rating early, so Milestone 3 has data.
 - Milestone 3: taste learning. Rule-based scoring first (ratings, cooldowns, at least one new pick, keep stretch picks achievable), with a reason shown for each pick. Embeddings and caching only if rules aren't enough.
 - Milestone 4: real user accounts before inviting friends and family. Replace `currentUser.ts` with real identity, and each user sees only their own data.
