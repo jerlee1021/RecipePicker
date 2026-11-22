@@ -197,3 +197,31 @@ export async function createRecipeForUser(userId: number, data: RecipeInput) {
     return recipe;
 }
 
+// Mark a picked recipe as cooked and attach its rating
+export async function markPickCooked(userId:number, pickId:number, rating:number) {
+    await prisma.pickedRecipe.update({
+        where: {
+            id: pickId,
+            plan: {userId: userId}, //plan belongs to the user
+            cookedAt: null //only update if not already cooked
+        },
+        data: {
+            cookedAt: new Date(),
+            rating: rating
+        }
+    });
+}
+
+export async function setPickRating(userId:number, pickId:number, rating:number) {
+
+    await prisma.pickedRecipe.update({
+        where: {
+            id: pickId,
+            plan: {userId: userId}, //plan belongs to the user
+            cookedAt: {not: null} //only update if already cooked
+        },
+        data: {
+            rating: rating
+        }
+    });
+}

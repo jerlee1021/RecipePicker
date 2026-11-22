@@ -4,7 +4,8 @@ import { refresh } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUserId } from "@/lib/currentUser";
 import { PICKS_PER_WEEK } from "@/lib/picks";
-import { createPlanWithPicks, deletePlanForWeek, setChecklistItemChecked, createRecipeForUser } from "@/lib/queries/weeklyrecipes";
+import { isValidRating } from "@/lib/rating";
+import { createPlanWithPicks, deletePlanForWeek, setChecklistItemChecked, createRecipeForUser, markPickCooked, setPickRating } from "@/lib/queries/weeklyrecipes";
 import { getMondayOf } from "@/lib/week";
 import { RecipeInput } from "@/lib/recipeInput";
 import { redirect } from "next/navigation";
@@ -117,3 +118,42 @@ export async function createRecipe(input: unknown): Promise<CreateRecipeResult> 
   redirect("/");
 }
 
+export async function markCooked(pickId: number, rating: number) {
+  if (!Number.isInteger(pickId) || !isValidRating(rating)) {
+    throw new Error("Invalid pickId or rating");
+  }
+
+  const userId = await getCurrentUserId();
+
+  try {
+    await markPickCooked(userId, pickId, rating);
+  } catch (e) {
+    // P2025 = no row matched: the pick doesn't exist, isn't this user's,
+    // or is already cooked (double tap, stale tab). The original cookedAt is kept.
+    const notFound = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
+    if (!notFound) throw e;
+    console.warn(`markPickCooked: pick ${pickId} not found for user ${userId}`);
+  }
+
+  refresh();
+}
+
+export async function reRate(pickId: number, rating: number) {
+  if (!Number.isInteger(pickId) || !isValidRating(rating)) {
+    throw new Error("Invalid pickId or rating");
+  }
+
+  const userId = await getCurrentUserId();
+
+  try {
+    await setPickRating(userId, pickId, rating);
+  } catch (e) {
+    // P2025 = no row matched: the pick doesn't exist, isn't this user's,
+    // or hasn't been cooked yet (a rating needs a cook first).
+    const notFound = e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025";
+    if (!notFound) throw e;
+    console.warn(`reRate: pick ${pickId} not found for user ${userId}`);
+  }
+
+  refresh();
+}

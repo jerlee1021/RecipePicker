@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { DeletePlanButton } from "./delete-plan-button";
+import { PickRating } from "./pick-rating";
 import { PlanDraft } from "./plan-draft";
 import { getCurrentUserId } from "@/lib/currentUser";
 import { PICKS_PER_WEEK, pickRandom } from "@/lib/picks";
@@ -34,8 +35,8 @@ export default async function Home() {
       {plan ? (
         <>
           <ul className="mt-6 space-y-3">
-            {plan.pickedRecipes.map(({ recipe }) => (
-              <li key={recipe.id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+            {plan.pickedRecipes.map(({ id, rating, recipe }) => (
+              <li key={id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
                 {recipe.sourceUrl ? (
                   <a
                     href={recipe.sourceUrl}
@@ -49,6 +50,7 @@ export default async function Home() {
                   <span className="font-medium">{recipe.name}</span>
                 )}
                 {recipe.source && <p className="mt-1 text-sm text-zinc-500">{recipe.source}</p>}
+                <PickRating pickId={id} rating={rating} />
               </li>
             ))}
           </ul>
